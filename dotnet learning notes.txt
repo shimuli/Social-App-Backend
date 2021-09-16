@@ -1,0 +1,10 @@
+dotnet --info
+dotnet new sln
+dotnet new webapi -o API
+dotnet sln add API/
+
+
+dotnet watch run
+ dotnet dev-certs https --trust
+
+swagger/index.html
