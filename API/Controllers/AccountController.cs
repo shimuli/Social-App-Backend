@@ -7,22 +7,25 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Http;
 using API.DTOs;
 using Microsoft.EntityFrameworkCore;
+using API.Interfaces;
 
 namespace API.Controllers
 {
     public class AccountController : BaseApiController
     {
         private readonly DataContext _context;
-        public AccountController(DataContext context)
+        private readonly ITokenService _tokenService;
+        public AccountController(DataContext context, ITokenService tokenService)
         {
+            _tokenService = tokenService;
             _context = context;
         }
 
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register( [FromForm] RegisterDto registerDto)
+        public async Task<IActionResult> Register([FromForm] RegisterDto registerDto)
         {
-            if(await UserExists(registerDto.UserName))
+            if (await UserExists(registerDto.UserName))
             {
                 return BadRequest("User Name is taken");
             }
@@ -46,42 +49,35 @@ namespace API.Controllers
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult>Login([FromForm] LoginDto loginDto)
+        public async Task<ActionResult<UserDto>> Login([FromForm] LoginDto loginDto)
         {
             var user = await _context.Users.SingleOrDefaultAsync(x => x.UserName == loginDto.UserName.ToLower());
-            if(user == null){
+            if (user == null)
+            {
                 return Unauthorized("Invalid User Name");
             }
             using var hmac = new HMACSHA512(user.PasswordSalt);
             var computedHash = hmac.ComputeHash(Encoding.UTF8.GetBytes(loginDto.Password));
-            
+
             for (int i = 0; i < computedHash.Length; i++)
             {
-                if(computedHash[i] != user.PasswordHash[i]){
+                if (computedHash[i] != user.PasswordHash[i])
+                {
                     return Unauthorized("Invalid Password");
                 }
             }
-            return new ObjectResult(new
+
+            return new UserDto
             {
-                message = "Login was successful",
-                UserId = user.Id,
-                userName = user.UserName
-                
-
-                // access_token = token.AccessToken,
-                // token_type = token.TokenType,
-                // expires_in = token.ExpiresIn,
-
-
-                /* expires_in = token.ExpiresIn,
-                 token_type = token.TokenType,
-                 creation_Time = token.ValidFrom,
-                 expiration_Time = token.ValidTo,*/
-            });
+                Id = user.Id,
+                UserName = user.UserName,
+                Token = _tokenService.CreateToken(user)
+            };
 
         }
 
-        private async Task<bool>UserExists(string username){
+        private async Task<bool> UserExists(string username)
+        {
             return await _context.Users.AnyAsync(x => x.UserName == username.ToLower());
         }
     }
