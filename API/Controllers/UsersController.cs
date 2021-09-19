@@ -16,7 +16,7 @@ namespace API.Controllers
         }
 
         [HttpGet]
-        [Authorize]
+       // [Authorize]
         public async Task<IActionResult>GetUsers()
         {
             var users = await _context.Users.ToListAsync();
