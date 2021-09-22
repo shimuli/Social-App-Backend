@@ -70,7 +70,7 @@ namespace API.Controllers
             return new UserDto
             {
                 Id = user.Id,
-                UserName = user.UserName,
+                username = user.UserName,
                 Token = _tokenService.CreateToken(user)
             };
 

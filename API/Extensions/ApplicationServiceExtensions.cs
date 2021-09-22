@@ -1,6 +1,9 @@
 using System;
 using API.Data;
 using API.Interfaces;
+using API.Mappers;
+using API.Repository.IRepo;
+using API.Repository.Repo;
 using API.Services;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -15,6 +18,8 @@ namespace API.Extensions
         {
 
             services.AddScoped<ITokenService, TokenService>();
+            services.AddScoped<IUserRepo, UserRepo>();
+            services.AddAutoMapper(typeof(AutoMappers).Assembly);
             services.AddDbContext<DataContext>(options =>
             {
                 options.UseSqlite(configuration.GetConnectionString("DefaultConnection"));
